@@ -17,7 +17,7 @@ export const Footer = () => {
               Transform customer support with real-time chat and instant messaging.
             </p>
             <a
-              href="tel:1-800-916-2459"
+              
               className="flex items-center gap-2 text-accent font-bold text-lg hover:opacity-80 transition-opacity"
             >
               <Phone className="h-5 w-5" />
@@ -80,21 +80,9 @@ export const Footer = () => {
               </p>
               <div>
                 <p className="font-semibold text-primary-foreground mb-1">Support & General:</p>
-                <a
-                  href="mailto:support@panvatech.com"
-                  className="text-accent hover:opacity-80 transition-opacity"
-                >
+                <p className="text-accent">
                   support@panvatech.com
-                </a>
-              </div>
-              <div>
-                <p className="font-semibold text-primary-foreground mb-1">Sales & Partnerships:</p>
-                <a
-                  href="mailto:sales@panvatech.com"
-                  className="text-accent hover:opacity-80 transition-opacity"
-                >
-                  sales@panvatech.com
-                </a>
+                </p>
               </div>
               <div>
                 <p className="font-semibold text-primary-foreground mb-1">Business Hours:</p>

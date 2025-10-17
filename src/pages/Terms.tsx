@@ -160,13 +160,13 @@ export default function Terms() {
               <div className="bg-muted p-4 rounded-lg mt-4">
                 <p>
                   <strong>Email:</strong>{" "}
-                  <a href="mailto:support@panvatech.com" className="text-accent hover:underline">
+                  <a  className="text-accent hover:underline">
                     support@panvatech.com
                   </a>
                 </p>
                 <p>
                   <strong>Phone:</strong>{" "}
-                  <a href="tel:1-800-916-2459" className="text-accent hover:underline">
+                  <a className="text-accent hover:underline">
                     1-800-916-2459
                   </a>
                 </p>

@@ -227,13 +227,13 @@ export default function Accessibility() {
               <div className="bg-muted p-4 rounded-lg mt-4">
                 <p>
                   <strong>Email:</strong>{" "}
-                  <a href="mailto:support@panvatech.com" className="text-accent hover:underline">
+                  <a  className="text-accent hover:underline">
                     support@panvatech.com
                   </a>
                 </p>
                 <p>
                   <strong>Phone:</strong>{" "}
-                  <a href="tel:1-800-916-2459" className="text-accent hover:underline">
+                  <a  className="text-accent hover:underline">
                     1-800-916-2459
                   </a>{" "}
                   (Available 24/7)
@@ -241,7 +241,7 @@ export default function Accessibility() {
                 <p>
                   <strong>Address:</strong> 14269 Danielson St, Suite 400, Poway, CA 92064
                 </p>
-                <p className="mt-3">
+                <p >
                   <strong>Business Hours:</strong> Monday - Friday, 9:00 AM - 6:00 PM EST
                 </p>
               </div>

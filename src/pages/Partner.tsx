@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { TrendingUp, Megaphone, Wrench, Award } from "lucide-react";
 import { toast } from "sonner";
+import { CONFIG } from "@/config/webhooks";
 
 const formatPhoneNumber = (value: string): string => {
   const digits = value.replace(/\D/g, "");
@@ -26,23 +26,25 @@ const formatPhoneNumber = (value: string): string => {
 
 export default function Partner() {
   const [formData, setFormData] = useState({
-    companyName: "",
-    contactName: "",
+    organizationName: "",
+    yourName: "",
+    titleRole: "",
     email: "",
     phone: "",
-    companySize: "",
-    partnershipTypes: [] as string[],
-    message: "",
+    organizationType: "",
+    potentialUsers: "",
+    partnershipInterest: "",
   });
 
   const [errors, setErrors] = useState({
-    companyName: "",
-    contactName: "",
+    organizationName: "",
+    yourName: "",
+    titleRole: "",
     email: "",
     phone: "",
-    companySize: "",
-    partnershipTypes: "",
-    message: "",
+    organizationType: "",
+    potentialUsers: "",
+    partnershipInterest: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,8 +53,9 @@ export default function Partner() {
     let error = "";
 
     switch (field) {
-      case "companyName":
-      case "contactName":
+      case "organizationName":
+      case "yourName":
+      case "titleRole":
         if (typeof value === "string" && value.trim().length < 2)
           error = "Must be at least 2 characters";
         break;
@@ -64,16 +67,13 @@ export default function Partner() {
         if (typeof value === "string" && value.replace(/\D/g, "").length !== 10)
           error = "Please enter a valid 10-digit phone number";
         break;
-      case "companySize":
-        if (!value) error = "Please select company size";
+      case "organizationType":
+      case "potentialUsers":
+        if (!value) error = "Please select an option";
         break;
-      case "partnershipTypes":
-        if (Array.isArray(value) && value.length === 0)
-          error = "Please select at least one partnership type";
-        break;
-      case "message":
-        if (typeof value === "string" && value.trim().length < 10)
-          error = "Message must be at least 10 characters";
+      case "partnershipInterest":
+        if (typeof value === "string" && value.trim().length < 2)
+          error = "Partnership interest must be at least 2 characters";
         break;
     }
 
@@ -89,14 +89,6 @@ export default function Partner() {
     validateField(field, value);
   };
 
-  const handlePartnershipTypeChange = (type: string, checked: boolean) => {
-    const newTypes = checked
-      ? [...formData.partnershipTypes, type]
-      : formData.partnershipTypes.filter((t) => t !== type);
-
-    setFormData((prev) => ({ ...prev, partnershipTypes: newTypes }));
-    validateField("partnershipTypes", newTypes);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,25 +100,83 @@ export default function Partner() {
 
     const hasErrors = Object.values(errors).some((error) => error !== "");
 
-    if (hasErrors || formData.partnershipTypes.length === 0) {
-      toast.error("Please fill in all fields correctly");
+    if (hasErrors) {
+      toast.error("Please fill in all required fields correctly");
       return;
     }
 
     setIsSubmitting(true);
+
+    // Prepare lead data for webhook
+    const leadData = {
+      organizationName: formData.organizationName,
+      yourName: formData.yourName,
+      titleRole: formData.titleRole,
+      email: formData.email,
+      phone: formData.phone,
+      organizationType: formData.organizationType,
+      potentialUsers: formData.potentialUsers,
+      partnershipInterest: formData.partnershipInterest,
+      timestamp: new Date().toISOString(),
+      website_source: "RingRemind Marketing Website",
+    };
+
+    try {
+      console.log("Sending n8n webhook notification...");
+      const webhookPayload = {
+        formType: "Partner",
+        timestamp: leadData.timestamp,
+        source: leadData.website_source,
+        data: {
+          organization: leadData.organizationName,
+          name: leadData.yourName,
+          titleRole: leadData.titleRole,
+          email: leadData.email,
+          phone: leadData.phone,
+          organizationType: leadData.organizationType,
+          potentialUsers: leadData.potentialUsers,
+          message: leadData.partnershipInterest,
+          source: "RingRemind Marketing Website",
+        }
+      };
+      console.log("n8n payload:", JSON.stringify(webhookPayload, null, 2));
+      
+      const webhookResponse = await fetch(CONFIG.WEBHOOKS.PARTNER_FORM, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(webhookPayload)
+      });
+      
+      console.log("n8n response status:", webhookResponse.status);
+      console.log("n8n response:", await webhookResponse.text());
+    } catch (webhookError) {
+      console.warn("n8n webhook notification failed:", webhookError);
+      // Don't fail the form submission if webhook notification fails
+    }
 
     setTimeout(() => {
       toast.success(
         "Partnership inquiry submitted! Our team will contact you within 24 hours."
       );
       setFormData({
-        companyName: "",
-        contactName: "",
+        organizationName: "",
+        yourName: "",
+        titleRole: "",
         email: "",
         phone: "",
-        companySize: "",
-        partnershipTypes: [],
-        message: "",
+        organizationType: "",
+        potentialUsers: "",
+        partnershipInterest: "",
+      });
+      setErrors({
+        organizationName: "",
+        yourName: "",
+        titleRole: "",
+        email: "",
+        phone: "",
+        organizationType: "",
+        potentialUsers: "",
+        partnershipInterest: "",
       });
       setIsSubmitting(false);
     }, 1000);
@@ -247,136 +297,156 @@ export default function Partner() {
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Become a Partner Today
+                Become a Partner
               </h2>
               <p className="text-lg text-muted-foreground">
-                Fill out the form below and we'll get back to you within 24 hours
+                Fill out the form below and our partnerships team will reach out
               </p>
             </div>
 
             <Card>
               <CardContent className="p-8">
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <Label htmlFor="companyName">Company Name *</Label>
-                    <Input
-                      id="companyName"
-                      value={formData.companyName}
-                      onChange={(e) => handleChange("companyName", e.target.value)}
-                      onBlur={(e) => validateField("companyName", e.target.value)}
-                      className={errors.companyName ? "border-destructive" : ""}
-                    />
-                    {errors.companyName && (
-                      <p className="text-sm text-destructive mt-1">{errors.companyName}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="contactName">Contact Name *</Label>
-                    <Input
-                      id="contactName"
-                      value={formData.contactName}
-                      onChange={(e) => handleChange("contactName", e.target.value)}
-                      onBlur={(e) => validateField("contactName", e.target.value)}
-                      className={errors.contactName ? "border-destructive" : ""}
-                    />
-                    {errors.contactName && (
-                      <p className="text-sm text-destructive mt-1">{errors.contactName}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleChange("email", e.target.value)}
-                      onBlur={(e) => validateField("email", e.target.value)}
-                      className={errors.email ? "border-destructive" : ""}
-                    />
-                    {errors.email && (
-                      <p className="text-sm text-destructive mt-1">{errors.email}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => handleChange("phone", e.target.value)}
-                      onBlur={(e) => validateField("phone", e.target.value)}
-                      placeholder="(XXX) XXX-XXXX"
-                      className={errors.phone ? "border-destructive" : ""}
-                    />
-                    {errors.phone && (
-                      <p className="text-sm text-destructive mt-1">{errors.phone}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="companySize">Company Size *</Label>
-                    <Select
-                      value={formData.companySize}
-                      onValueChange={(value) => handleChange("companySize", value)}
-                    >
-                      <SelectTrigger className={errors.companySize ? "border-destructive" : ""}>
-                        <SelectValue placeholder="Select company size" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1-10">1-10 employees</SelectItem>
-                        <SelectItem value="11-50">11-50 employees</SelectItem>
-                        <SelectItem value="51-200">51-200 employees</SelectItem>
-                        <SelectItem value="201-500">201-500 employees</SelectItem>
-                        <SelectItem value="500+">500+ employees</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {errors.companySize && (
-                      <p className="text-sm text-destructive mt-1">{errors.companySize}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label>Partnership Type * (Select at least one)</Label>
-                    <div className="space-y-3 mt-2">
-                      {["Reseller", "Integration Partner", "Referral Partner"].map((type) => (
-                        <div key={type} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={type}
-                            checked={formData.partnershipTypes.includes(type)}
-                            onCheckedChange={(checked) =>
-                              handlePartnershipTypeChange(type, checked as boolean)
-                            }
-                          />
-                          <label
-                            htmlFor={type}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {type}
-                          </label>
-                        </div>
-                      ))}
+                  {/* Two-column layout for single-line inputs */}
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="organizationName" className="block mb-2">Organization Name *</Label>
+                      <Input
+                        id="organizationName"
+                        value={formData.organizationName}
+                        onChange={(e) => handleChange("organizationName", e.target.value)}
+                        onBlur={(e) => validateField("organizationName", e.target.value)}
+                        placeholder="Your Organization"
+                        className={errors.organizationName ? "border-destructive" : ""}
+                      />
+                      {errors.organizationName && (
+                        <p className="text-sm text-destructive mt-1">{errors.organizationName}</p>
+                      )}
                     </div>
-                    {errors.partnershipTypes && (
-                      <p className="text-sm text-destructive mt-1">
-                        {errors.partnershipTypes}
-                      </p>
-                    )}
+
+                    <div>
+                      <Label htmlFor="yourName" className="block mb-2">Your Name *</Label>
+                      <Input
+                        id="yourName"
+                        value={formData.yourName}
+                        onChange={(e) => handleChange("yourName", e.target.value)}
+                        onBlur={(e) => validateField("yourName", e.target.value)}
+                        placeholder="John Doe"
+                        className={errors.yourName ? "border-destructive" : ""}
+                      />
+                      {errors.yourName && (
+                        <p className="text-sm text-destructive mt-1">{errors.yourName}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="titleRole" className="block mb-2">Title/Role *</Label>
+                      <Input
+                        id="titleRole"
+                        value={formData.titleRole}
+                        onChange={(e) => handleChange("titleRole", e.target.value)}
+                        onBlur={(e) => validateField("titleRole", e.target.value)}
+                        placeholder="Chief Medical Officer"
+                        className={errors.titleRole ? "border-destructive" : ""}
+                      />
+                      {errors.titleRole && (
+                        <p className="text-sm text-destructive mt-1">{errors.titleRole}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="email" className="block mb-2">Email Address *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleChange("email", e.target.value)}
+                        onBlur={(e) => validateField("email", e.target.value)}
+                        placeholder="john@example.com"
+                        className={errors.email ? "border-destructive" : ""}
+                      />
+                      {errors.email && (
+                        <p className="text-sm text-destructive mt-1">{errors.email}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="phone" className="block mb-2">Phone Number *</Label>
+                      <Input
+                        id="phone"
+                        value={formData.phone}
+                        onChange={(e) => handleChange("phone", e.target.value)}
+                        onBlur={(e) => validateField("phone", e.target.value)}
+                        placeholder="(555) 123-4567"
+                        className={errors.phone ? "border-destructive" : ""}
+                      />
+                      {errors.phone && (
+                        <p className="text-sm text-destructive mt-1">{errors.phone}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="organizationType" className="block mb-2">Organization Type *</Label>
+                      <Select
+                        value={formData.organizationType}
+                        onValueChange={(value) => handleChange("organizationType", value)}
+                      >
+                        <SelectTrigger className={errors.organizationType ? "border-destructive" : ""}>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="healthcare-provider" className="focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground">Healthcare Provider</SelectItem>
+                          <SelectItem value="healthcare-system" className="focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground">Healthcare System</SelectItem>
+                          <SelectItem value="technology-company" className="focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground">Technology Company</SelectItem>
+                          <SelectItem value="consulting-firm" className="focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground">Consulting Firm</SelectItem>
+                          <SelectItem value="government-agency" className="focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground">Government Agency</SelectItem>
+                          <SelectItem value="non-profit" className="focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground">Non-Profit Organization</SelectItem>
+                          <SelectItem value="other" className="focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.organizationType && (
+                        <p className="text-sm text-destructive mt-1">{errors.organizationType}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="potentialUsers" className="block mb-2">Potential Users *</Label>
+                      <Select
+                        value={formData.potentialUsers}
+                        onValueChange={(value) => handleChange("potentialUsers", value)}
+                      >
+                        <SelectTrigger className={errors.potentialUsers ? "border-destructive" : ""}>
+                          <SelectValue placeholder="Select range" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1-10" className="focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground">1-10 users</SelectItem>
+                          <SelectItem value="11-50" className="focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground">11-50 users</SelectItem>
+                          <SelectItem value="51-200" className="focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground">51-200 users</SelectItem>
+                          <SelectItem value="201-500" className="focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground">201-500 users</SelectItem>
+                          <SelectItem value="501-1000" className="focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground">501-1,000 users</SelectItem>
+                          <SelectItem value="1000+" className="focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground">1,000+ users</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.potentialUsers && (
+                        <p className="text-sm text-destructive mt-1">{errors.potentialUsers}</p>
+                      )}
+                    </div>
                   </div>
 
+                  {/* Full-width textarea */}
                   <div>
-                    <Label htmlFor="message">Message *</Label>
+                    <Label htmlFor="partnershipInterest" className="block mb-2">Partnership Interest *</Label>
                     <Textarea
-                      id="message"
-                      value={formData.message}
-                      onChange={(e) => handleChange("message", e.target.value)}
-                      onBlur={(e) => validateField("message", e.target.value)}
+                      id="partnershipInterest"
+                      value={formData.partnershipInterest}
+                      onChange={(e) => handleChange("partnershipInterest", e.target.value)}
+                      onBlur={(e) => validateField("partnershipInterest", e.target.value)}
+                      placeholder="Tell us about your partnership interests..."
                       rows={5}
-                      className={errors.message ? "border-destructive" : ""}
+                      className={errors.partnershipInterest ? "border-destructive" : ""}
                     />
-                    {errors.message && (
-                      <p className="text-sm text-destructive mt-1">{errors.message}</p>
+                    {errors.partnershipInterest && (
+                      <p className="text-sm text-destructive mt-1">{errors.partnershipInterest}</p>
                     )}
                   </div>
 

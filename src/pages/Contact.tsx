@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Phone, MapPin, Mail, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { CONFIG } from "@/config/webhooks";
 
 const formatPhoneNumber = (value: string): string => {
   const digits = value.replace(/\D/g, "");
@@ -29,6 +30,8 @@ export default function Contact() {
     name: "",
     email: "",
     phone: "",
+    company: "",
+    serviceInterest: "",
     message: "",
   });
 
@@ -36,6 +39,8 @@ export default function Contact() {
     name: "",
     email: "",
     phone: "",
+    company: "",
+    serviceInterest: "",
     message: "",
   });
 
@@ -54,8 +59,14 @@ export default function Contact() {
       case "phone":
         if (!validatePhone(value)) error = "Please enter a valid 10-digit phone number";
         break;
+      case "company":
+        if (value.trim().length < 2) error = "Company/Organization must be at least 2 characters";
+        break;
+      case "serviceInterest":
+        if (value.trim().length < 2) error = "Service interest must be at least 2 characters";
+        break;
       case "message":
-        if (value.trim().length < 10) error = "Message must be at least 10 characters";
+        if (value.trim().length < 2) error = "Message must be at least 2 characters";
         break;
     }
 
@@ -80,20 +91,64 @@ export default function Contact() {
     });
 
     const hasErrors = Object.values(errors).some((error) => error !== "");
-    const hasEmptyFields = Object.values(formData).some((value) => value.trim() === "");
+    const requiredFields = ['name', 'email', 'phone', 'company', 'serviceInterest', 'message'];
+    const hasEmptyRequiredFields = requiredFields.some((field) => formData[field as keyof typeof formData].trim() === "");
 
-    if (hasErrors || hasEmptyFields) {
-      toast.error("Please fill in all fields correctly");
+    if (hasErrors || hasEmptyRequiredFields) {
+      toast.error("Please fill in all required fields correctly");
       return;
     }
 
     setIsSubmitting(true);
 
+    // Prepare lead data for webhook
+    const leadData = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      company: formData.company,
+      serviceInterest: formData.serviceInterest,
+      message: formData.message,
+      timestamp: new Date().toISOString(),
+      website_source: "RingRemind Marketing Website",
+    };
+
+    try {
+      console.log("Sending n8n webhook notification...");
+      const webhookPayload = {
+        formType: "Contact",
+        timestamp: leadData.timestamp,
+        source: leadData.website_source,
+        data: {
+          name: leadData.name,
+          email: leadData.email,
+          phone: leadData.phone,
+          company: leadData.company || null,
+          serviceInterest: formData.serviceInterest,
+          message: leadData.message,
+          source: "RingRemind Marketing Website",
+        }
+      };
+      console.log("n8n payload:", JSON.stringify(webhookPayload, null, 2));
+      
+      const webhookResponse = await fetch(CONFIG.WEBHOOKS.CONTACT_FORM, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(webhookPayload)
+      });
+      
+      console.log("n8n response status:", webhookResponse.status);
+      console.log("n8n response:", await webhookResponse.text());
+    } catch (webhookError) {
+      console.warn("n8n webhook notification failed:", webhookError);
+      // Don't fail the form submission if webhook notification fails
+    }
+
     // Simulate submission
     setTimeout(() => {
       toast.success("Message sent successfully! We'll get back to you within 24 hours.");
-      setFormData({ name: "", email: "", phone: "", message: "" });
-      setErrors({ name: "", email: "", phone: "", message: "" });
+      setFormData({ name: "", email: "", phone: "", company: "", serviceInterest: "", message: "" });
+      setErrors({ name: "", email: "", phone: "", company: "", serviceInterest: "", message: "" });
       setIsSubmitting(false);
     }, 1000);
   };
@@ -102,7 +157,9 @@ export default function Contact() {
     formData.name.trim().length >= 2 &&
     validateEmail(formData.email) &&
     validatePhone(formData.phone) &&
-    formData.message.trim().length >= 10 &&
+    formData.company.trim().length >= 2 &&
+    formData.serviceInterest.trim().length >= 2 &&
+    formData.message.trim().length >= 2 &&
     !Object.values(errors).some((error) => error !== "");
 
   return (
@@ -130,7 +187,7 @@ export default function Contact() {
               <div className="lg:col-span-3 bg-card rounded-lg shadow-lg p-8">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <Label htmlFor="name">Name *</Label>
+                    <Label htmlFor="name" className="block mb-2">Name *</Label>
                     <Input
                       id="name"
                       value={formData.name}
@@ -144,7 +201,7 @@ export default function Contact() {
                   </div>
 
                   <div>
-                    <Label htmlFor="email">Email Address *</Label>
+                    <Label htmlFor="email" className="block mb-2">Email Address *</Label>
                     <Input
                       id="email"
                       type="email"
@@ -159,13 +216,13 @@ export default function Contact() {
                   </div>
 
                   <div>
-                    <Label htmlFor="phone">Phone Number *</Label>
+                    <Label htmlFor="phone" className="block mb-2">Phone Number *</Label>
                     <Input
                       id="phone"
                       value={formData.phone}
                       onChange={(e) => handleChange("phone", e.target.value)}
                       onBlur={(e) => validateField("phone", e.target.value)}
-                      placeholder="(XXX) XXX-XXXX"
+                      placeholder="(555) 123-4567"
                       className={errors.phone ? "border-destructive" : ""}
                     />
                     {errors.phone && (
@@ -174,12 +231,43 @@ export default function Contact() {
                   </div>
 
                   <div>
-                    <Label htmlFor="message">Comment / Message *</Label>
+                    <Label htmlFor="company" className="block mb-2">Company/Organization *</Label>
+                    <Input
+                      id="company"
+                      value={formData.company}
+                      onChange={(e) => handleChange("company", e.target.value)}
+                      onBlur={(e) => validateField("company", e.target.value)}
+                      placeholder="Your Company"
+                      className={errors.company ? "border-destructive" : ""}
+                    />
+                    {errors.company && (
+                      <p className="text-sm text-destructive mt-1">{errors.company}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="serviceInterest" className="block mb-2">Service Interest *</Label>
+                    <Input
+                      id="serviceInterest"
+                      value={formData.serviceInterest}
+                      onChange={(e) => handleChange("serviceInterest", e.target.value)}
+                      onBlur={(e) => validateField("serviceInterest", e.target.value)}
+                      placeholder="e.g., Healthcare IT Solutions, Telemedicine, etc."
+                      className={errors.serviceInterest ? "border-destructive" : ""}
+                    />
+                    {errors.serviceInterest && (
+                      <p className="text-sm text-destructive mt-1">{errors.serviceInterest}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="message" className="block mb-2">Message/Comments *</Label>
                     <Textarea
                       id="message"
                       value={formData.message}
                       onChange={(e) => handleChange("message", e.target.value)}
                       onBlur={(e) => validateField("message", e.target.value)}
+                      placeholder="Tell us how we can help you..."
                       rows={5}
                       className={errors.message ? "border-destructive" : ""}
                     />
