@@ -1,4 +1,5 @@
 import { Layout } from "@/components/Layout";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
@@ -85,6 +86,12 @@ const Index = () => {
 
   return (
     <Layout>
+      <SEO
+        title="Real-Time Chat Support & Online Communication Platform"
+        description="Transform customer support with RingRemind's real-time chat platform. Engage customers instantly with seamless messaging and secure communication."
+        keywords="online chat support, real-time messaging, customer communication platform, live chat software, customer engagement, business communication, chat support solutions"
+        canonical="https://ringremind.com/"
+      />
       {/* Hero Section */}
       <section className="relative py-20 md:py-32 bg-gradient-to-br from-primary via-primary/95 to-secondary overflow-hidden">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />

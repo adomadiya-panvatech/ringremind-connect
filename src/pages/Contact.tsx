@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Layout } from "@/components/Layout";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -106,6 +107,12 @@ export default function Contact() {
 
   return (
     <Layout>
+      <SEO
+        title="Contact RingRemind - Get Started | Call 1-800-916-2459"
+        description="Contact RingRemind at 1-800-916-2459 or email support@panvatech.com, sales@panvatech.com. Visit us at 14269 Danielson St, Poway, CA 92064."
+        keywords="contact ringremind, customer support, sales inquiry, chat support contact, business communication contact"
+        canonical="https://ringremind.com/contact"
+      />
       <div className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">

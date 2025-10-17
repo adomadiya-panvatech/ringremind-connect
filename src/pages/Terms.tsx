@@ -1,8 +1,15 @@
 import { Layout } from "@/components/Layout";
+import { SEO } from "@/components/SEO";
 
 export default function Terms() {
   return (
     <Layout>
+      <SEO
+        title="Terms and Conditions"
+        description="Read RingRemind's terms and conditions for using our communication platform services. Understand your rights and responsibilities."
+        canonical="https://ringremind.com/terms"
+        noindex={true}
+      />
       <div className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto prose prose-lg">

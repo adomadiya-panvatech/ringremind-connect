@@ -1,8 +1,15 @@
 import { Layout } from "@/components/Layout";
+import { SEO } from "@/components/SEO";
 
 export default function Privacy() {
   return (
     <Layout>
+      <SEO
+        title="Privacy Policy"
+        description="Learn how RingRemind collects, uses, and protects your personal information. Our privacy policy explains data collection, storage, and your rights."
+        canonical="https://ringremind.com/privacy"
+        noindex={true}
+      />
       <div className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto prose prose-lg">

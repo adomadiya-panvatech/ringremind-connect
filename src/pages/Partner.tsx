@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Layout } from "@/components/Layout";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -173,6 +174,12 @@ export default function Partner() {
 
   return (
     <Layout>
+      <SEO
+        title="Partner With RingRemind - Communication Platform Partnerships"
+        description="Join RingRemind's partner program. Become a reseller, integration partner, or referral partner and grow your business with our communication platform."
+        keywords="partnership program, reseller partner, integration partner, referral partner, business partnership, communication platform partnership"
+        canonical="https://ringremind.com/partner"
+      />
       {/* Hero Section */}
       <section className="py-16 bg-gradient-to-br from-primary to-secondary text-primary-foreground">
         <div className="container mx-auto px-4 text-center">

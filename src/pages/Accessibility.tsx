@@ -1,8 +1,14 @@
 import { Layout } from "@/components/Layout";
+import { SEO } from "@/components/SEO";
 
 export default function Accessibility() {
   return (
     <Layout>
+      <SEO
+        title="Accessibility & Information Notice"
+        description="RingRemind's commitment to web accessibility (WCAG 2.1 Level AA) and detailed information about data collection, usage, and visitor rights."
+        canonical="https://ringremind.com/accessibility"
+      />
       <div className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto prose prose-lg">
