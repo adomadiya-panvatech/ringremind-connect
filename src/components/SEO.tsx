@@ -1,4 +1,4 @@
-import { Helmet } from "react-helmet-async";
+import { useEffect } from "react";
 
 interface SEOProps {
   title: string;
@@ -9,26 +9,60 @@ interface SEOProps {
 }
 
 export const SEO = ({ title, description, keywords, canonical, noindex }: SEOProps) => {
-  const fullTitle = `${title} | RingRemind`;
-  const baseUrl = "https://ringremind.com";
-  const canonicalUrl = canonical || baseUrl;
+  useEffect(() => {
+    // Update title
+    document.title = `${title} | RingRemind`;
 
-  return (
-    <Helmet>
-      <title>{fullTitle}</title>
-      <meta name="description" content={description} />
-      {keywords && <meta name="keywords" content={keywords} />}
-      <link rel="canonical" href={canonicalUrl} />
-      {noindex && <meta name="robots" content="noindex, follow" />}
+    // Update or create meta tags
+    const updateMetaTag = (name: string, content: string, property?: boolean) => {
+      const attribute = property ? "property" : "name";
+      let tag = document.querySelector(`meta[${attribute}="${name}"]`);
       
-      {/* Open Graph */}
-      <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description} />
-      <meta property="og:url" content={canonicalUrl} />
+      if (!tag) {
+        tag = document.createElement("meta");
+        tag.setAttribute(attribute, name);
+        document.head.appendChild(tag);
+      }
       
-      {/* Twitter */}
-      <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={description} />
-    </Helmet>
-  );
+      tag.setAttribute("content", content);
+    };
+
+    // Update description
+    updateMetaTag("description", description);
+
+    // Update keywords if provided
+    if (keywords) {
+      updateMetaTag("keywords", keywords);
+    }
+
+    // Update canonical link
+    let canonicalLink = document.querySelector('link[rel="canonical"]');
+    if (!canonicalLink) {
+      canonicalLink = document.createElement("link");
+      canonicalLink.setAttribute("rel", "canonical");
+      document.head.appendChild(canonicalLink);
+    }
+    canonicalLink.setAttribute("href", canonical || window.location.href);
+
+    // Update robots meta
+    if (noindex) {
+      updateMetaTag("robots", "noindex, follow");
+    } else {
+      const robotsTag = document.querySelector('meta[name="robots"]');
+      if (robotsTag && robotsTag.getAttribute("content") === "noindex, follow") {
+        robotsTag.setAttribute("content", "index, follow");
+      }
+    }
+
+    // Update Open Graph tags
+    updateMetaTag("og:title", `${title} | RingRemind`, true);
+    updateMetaTag("og:description", description, true);
+    updateMetaTag("og:url", canonical || window.location.href, true);
+
+    // Update Twitter Card tags
+    updateMetaTag("twitter:title", `${title} | RingRemind`);
+    updateMetaTag("twitter:description", description);
+  }, [title, description, keywords, canonical, noindex]);
+
+  return null;
 };
