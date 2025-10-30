@@ -10,6 +10,12 @@ export const Header = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const handleNavigation = (path: string) => {
+    // Scroll to top when navigating to any page from header
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setIsMenuOpen(false);
+  };
+
   const navLinks = [
     { path: "/", label: "Home" },
     { path: "/partner", label: "Partner With Us" },
@@ -30,6 +36,7 @@ export const Header = () => {
               <Link
                 key={link.path}
                 to={link.path}
+                onClick={() => handleNavigation(link.path)}
                 className={`text-sm font-medium transition-colors hover:text-primary ${
                   isActive(link.path) ? "text-primary" : "text-foreground"
                 }`}
@@ -38,7 +45,7 @@ export const Header = () => {
               </Link>
             ))}
             <Button asChild>
-              <Link to="/contact">Get Started</Link>
+              <Link to="/contact" onClick={() => handleNavigation("/contact")}>Get Started</Link>
             </Button>
           </nav>
 
@@ -62,13 +69,13 @@ export const Header = () => {
                 className={`block text-sm font-medium transition-colors hover:text-primary ${
                   isActive(link.path) ? "text-primary" : "text-foreground"
                 }`}
-                onClick={() => setIsMenuOpen(false)}
+                onClick={() => handleNavigation(link.path)}
               >
                 {link.label}
               </Link>
             ))}
             <Button asChild className="w-full">
-              <Link to="/contact" onClick={() => setIsMenuOpen(false)}>
+              <Link to="/contact" onClick={() => handleNavigation("/contact")}>
                 Get Started
               </Link>
             </Button>

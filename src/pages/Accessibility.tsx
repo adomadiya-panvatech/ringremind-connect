@@ -1,7 +1,13 @@
+import { useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { SEO } from "@/components/SEO";
 
 export default function Accessibility() {
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   return (
     <Layout>
       <SEO

@@ -3,6 +3,11 @@ import { Phone } from "lucide-react";
 import logo from "@/assets/ringremind-logo.png";
 
 export const Footer = () => {
+  const handleLinkClick = () => {
+    // Scroll to top when clicking footer links
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-12">
@@ -31,17 +36,17 @@ export const Footer = () => {
             <h3 className="font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/" className="text-sm opacity-90 hover:text-accent transition-colors">
+                <Link to="/" onClick={handleLinkClick} className="text-sm opacity-90 hover:text-accent transition-colors">
                   Home
                 </Link>
               </li>
               <li>
-                <Link to="/partner" className="text-sm opacity-90 hover:text-accent transition-colors">
+                <Link to="/partner" onClick={handleLinkClick} className="text-sm opacity-90 hover:text-accent transition-colors">
                   Partner With Us
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-sm opacity-90 hover:text-accent transition-colors">
+                <Link to="/contact" onClick={handleLinkClick} className="text-sm opacity-90 hover:text-accent transition-colors">
                   Contact Us
                 </Link>
               </li>
@@ -53,17 +58,17 @@ export const Footer = () => {
             <h3 className="font-semibold mb-4">Legal</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/privacy" className="text-sm opacity-90 hover:text-accent transition-colors">
+                <Link to="/privacy" onClick={handleLinkClick} className="text-sm opacity-90 hover:text-accent transition-colors">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="text-sm opacity-90 hover:text-accent transition-colors">
+                <Link to="/terms" onClick={handleLinkClick} className="text-sm opacity-90 hover:text-accent transition-colors">
                   Terms & Conditions
                 </Link>
               </li>
               <li>
-                <Link to="/accessibility" className="text-sm opacity-90 hover:text-accent transition-colors">
+                <Link to="/accessibility" onClick={handleLinkClick} className="text-sm opacity-90 hover:text-accent transition-colors">
                   Accessibility Notice
                 </Link>
               </li>

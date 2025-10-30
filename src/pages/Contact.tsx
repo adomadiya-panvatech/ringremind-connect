@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Phone, MapPin, Mail, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { CONFIG } from "@/config/webhooks";
@@ -26,11 +33,18 @@ const validatePhone = (phone: string): boolean => {
 };
 
 export default function Contact() {
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     company: "",
+    preferredContactMethod: "",
+    bestTimeToContact: "",
     serviceInterest: "",
     message: "",
   });
@@ -40,6 +54,8 @@ export default function Contact() {
     email: "",
     phone: "",
     company: "",
+    preferredContactMethod: "",
+    bestTimeToContact: "",
     serviceInterest: "",
     message: "",
   });
@@ -60,7 +76,11 @@ export default function Contact() {
         if (!validatePhone(value)) error = "Please enter a valid 10-digit phone number";
         break;
       case "company":
-        if (value.trim().length < 2) error = "Company/Organization must be at least 2 characters";
+        // Company is optional, no validation needed
+        break;
+      case "preferredContactMethod":
+      case "bestTimeToContact":
+        // These are optional, no validation needed
         break;
       case "serviceInterest":
         if (value.trim().length < 2) error = "Service interest must be at least 2 characters";
@@ -91,8 +111,11 @@ export default function Contact() {
     });
 
     const hasErrors = Object.values(errors).some((error) => error !== "");
-    const requiredFields = ['name', 'email', 'phone', 'company', 'serviceInterest', 'message'];
-    const hasEmptyRequiredFields = requiredFields.some((field) => formData[field as keyof typeof formData].trim() === "");
+    const requiredFields = ['name', 'email', 'phone', 'serviceInterest', 'message'];
+    const hasEmptyRequiredFields = requiredFields.some((field) => {
+      const value = formData[field as keyof typeof formData];
+      return typeof value === 'string' && value.trim() === "";
+    });
 
     if (hasErrors || hasEmptyRequiredFields) {
       toast.error("Please fill in all required fields correctly");
@@ -106,7 +129,9 @@ export default function Contact() {
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
-      company: formData.company,
+      company: formData.company || "",
+      preferredContactMethod: formData.preferredContactMethod || "",
+      bestTimeToContact: formData.bestTimeToContact || "",
       serviceInterest: formData.serviceInterest,
       message: formData.message,
       timestamp: new Date().toISOString(),
@@ -116,18 +141,17 @@ export default function Contact() {
     try {
       console.log("Sending n8n webhook notification...");
       const webhookPayload = {
-        formType: "Contact",
+        form_type: "contact_us",
         timestamp: leadData.timestamp,
-        source: leadData.website_source,
-        data: {
-          name: leadData.name,
-          email: leadData.email,
-          phone: leadData.phone,
-          company: leadData.company || null,
-          serviceInterest: formData.serviceInterest,
-          message: leadData.message,
-          source: "RingRemind Marketing Website",
-        }
+        website_source: leadData.website_source,
+        name: leadData.name,
+        email: leadData.email,
+        phone: leadData.phone,
+        company: leadData.company || null,
+        preferredContactMethod: leadData.preferredContactMethod || null,
+        bestTimeToContact: leadData.bestTimeToContact || null,
+        serviceInterest: leadData.serviceInterest,
+        message: leadData.message,
       };
       console.log("n8n payload:", JSON.stringify(webhookPayload, null, 2));
       
@@ -147,8 +171,26 @@ export default function Contact() {
     // Simulate submission
     setTimeout(() => {
       toast.success("Message sent successfully! We'll get back to you within 24 hours.");
-      setFormData({ name: "", email: "", phone: "", company: "", serviceInterest: "", message: "" });
-      setErrors({ name: "", email: "", phone: "", company: "", serviceInterest: "", message: "" });
+      setFormData({ 
+        name: "", 
+        email: "", 
+        phone: "", 
+        company: "", 
+        preferredContactMethod: "",
+        bestTimeToContact: "",
+        serviceInterest: "",
+        message: "" 
+      });
+      setErrors({ 
+        name: "", 
+        email: "", 
+        phone: "", 
+        company: "", 
+        preferredContactMethod: "",
+        bestTimeToContact: "",
+        serviceInterest: "",
+        message: "" 
+      });
       setIsSubmitting(false);
     }, 1000);
   };
@@ -157,7 +199,6 @@ export default function Contact() {
     formData.name.trim().length >= 2 &&
     validateEmail(formData.email) &&
     validatePhone(formData.phone) &&
-    formData.company.trim().length >= 2 &&
     formData.serviceInterest.trim().length >= 2 &&
     formData.message.trim().length >= 2 &&
     !Object.values(errors).some((error) => error !== "");
@@ -175,10 +216,10 @@ export default function Contact() {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
               <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-                Get in Touch
+                Send Us a Message
               </h1>
               <p className="text-lg text-muted-foreground">
-                Fill out the form below and we'll get back to you within 24 hours
+                Fill out the form below and we'll get back to you within 24 hours.
               </p>
             </div>
 
@@ -186,42 +227,49 @@ export default function Contact() {
               {/* Contact Form - 60% width */}
               <div className="lg:col-span-3 bg-card rounded-lg shadow-lg p-8">
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <Label htmlFor="name" className="block mb-2">Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => handleChange("name", e.target.value)}
-                      onBlur={(e) => validateField("name", e.target.value)}
-                      className={errors.name ? "border-destructive" : ""}
-                    />
+                  {/* Two-column layout for first row */}
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="name" className="block mb-2">Full Name *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => handleChange("name", e.target.value)}
+                        onBlur={(e) => validateField("name", e.target.value)}
+                        placeholder="John Doe"
+                        className={errors.name ? "border-destructive" : ""}
+                      />
                     {errors.name && (
                       <p className="text-sm text-destructive mt-1">{errors.name}</p>
                     )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="email" className="block mb-2">Email Address *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleChange("email", e.target.value)}
+                        onBlur={(e) => validateField("email", e.target.value)}
+                        placeholder="john@example.com"
+                        className={errors.email ? "border-destructive" : ""}
+                      />
+                      {errors.email && (
+                        <p className="text-sm text-destructive mt-1">{errors.email}</p>
+                      )}
+                    </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="email" className="block mb-2">Email Address *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleChange("email", e.target.value)}
-                      onBlur={(e) => validateField("email", e.target.value)}
-                      className={errors.email ? "border-destructive" : ""}
-                    />
-                    {errors.email && (
-                      <p className="text-sm text-destructive mt-1">{errors.email}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="phone" className="block mb-2">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => handleChange("phone", e.target.value)}
-                      onBlur={(e) => validateField("phone", e.target.value)}
+                  {/* Two-column layout for second row */}
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="phone" className="block mb-2">Phone Number *</Label>
+                      <Input
+                        id="phone"
+                        value={formData.phone}
+                        onChange={(e) => handleChange("phone", e.target.value)}
+                        onBlur={(e) => validateField("phone", e.target.value)}
                       placeholder="(555) 123-4567"
                       className={errors.phone ? "border-destructive" : ""}
                     />
@@ -231,7 +279,7 @@ export default function Contact() {
                   </div>
 
                   <div>
-                    <Label htmlFor="company" className="block mb-2">Company/Organization *</Label>
+                    <Label htmlFor="company" className="block mb-2">Company/Organization</Label>
                     <Input
                       id="company"
                       value={formData.company}
@@ -243,8 +291,55 @@ export default function Contact() {
                     {errors.company && (
                       <p className="text-sm text-destructive mt-1">{errors.company}</p>
                     )}
+                    </div>
                   </div>
 
+                  {/* Two-column layout for dropdowns */}
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="preferredContactMethod" className="block mb-2">Preferred Contact Method</Label>
+                      <Select
+                        value={formData.preferredContactMethod}
+                        onValueChange={(value) => handleChange("preferredContactMethod", value)}
+                      >
+                        <SelectTrigger className={errors.preferredContactMethod ? "border-destructive" : ""}>
+                          <SelectValue placeholder="Select preferred method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="email">Email</SelectItem>
+                          <SelectItem value="phone">Phone</SelectItem>
+                          <SelectItem value="microsoft-teams">Microsoft Teams</SelectItem>
+                          <SelectItem value="any">Any Method</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.preferredContactMethod && (
+                        <p className="text-sm text-destructive mt-1">{errors.preferredContactMethod}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="bestTimeToContact" className="block mb-2">Best Time to Contact</Label>
+                      <Select
+                        value={formData.bestTimeToContact}
+                        onValueChange={(value) => handleChange("bestTimeToContact", value)}
+                      >
+                        <SelectTrigger className={errors.bestTimeToContact ? "border-destructive" : ""}>
+                          <SelectValue placeholder="Select best time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="morning">Morning (9 AM - 12 PM)</SelectItem>
+                          <SelectItem value="afternoon">Afternoon (12 PM - 5 PM)</SelectItem>
+                          <SelectItem value="evening">Evening (5 PM - 6 PM)</SelectItem>
+                          <SelectItem value="anytime">Anytime</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.bestTimeToContact && (
+                        <p className="text-sm text-destructive mt-1">{errors.bestTimeToContact}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Full-width Service Interest */}
                   <div>
                     <Label htmlFor="serviceInterest" className="block mb-2">Service Interest *</Label>
                     <Input
@@ -260,6 +355,7 @@ export default function Contact() {
                     )}
                   </div>
 
+                  {/* Full-width Message */}
                   <div>
                     <Label htmlFor="message" className="block mb-2">Message/Comments *</Label>
                     <Textarea
